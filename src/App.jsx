@@ -1,83 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import Portfolio from './components/Portfolio';
-import ExchangeCoins from './components/ExchangeCoins';
-import CryptoChart from './components/CryptoChart';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import Login from './pages/Login';
+import BookAppointment from './pages/BookAppointment';
+import MyAppointments from './pages/MyAppointments';
 
-function App() {
-  const [cryptos, setCryptos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currency, setCurrency] = useState('usd');
-  const [search, setSearch] = useState('');
-  const [selectedCoin, setSelectedCoin] = useState('bitcoin');
-
-  useEffect(() => {
-    const fetchCryptos = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${currency}&order=market_cap_desc&per_page=20&page=1&sparkline=false`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCryptos(data);
-        }
-      } catch (error) {
-        console.error('Error fetching crypto data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCryptos();
-  }, [currency]);
-
-  // Filter cryptos based on search input
-  const filteredCryptos = cryptos.filter(
-    (coin) =>
-      coin.name.toLowerCase().includes(search.toLowerCase()) ||
-      coin.symbol.toLowerCase().includes(search.toLowerCase())
-  );
-
+function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* Top Navbar */}
-      <Navbar
-        currency={currency}
-        setCurrency={setCurrency}
-        search={search}
-        setSearch={setSearch}
-      />
-
-      {/* Main Dashboard Layout */}
-      <div className="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
-        {/* Left Section (Charts + Portfolio + Exchange) - 3 Columns */}
-        <div className="lg:col-span-3 flex flex-col space-y-6">
-          {/* Main Price Chart */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-            <CryptoChart coinId={selectedCoin} currency={currency} />
-          </div>
-
-          {/* Bottom Row: Portfolio & Exchange Coins */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Portfolio currency={currency} />
-            <ExchangeCoins cryptos={cryptos} />
-          </div>
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-blue-600 mb-2">Doctor Appointment System</h1>
+      <p className="text-gray-600 mb-6">Book consultations and diagnostic tests easily.</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-6 border rounded-lg shadow-sm bg-white">
+          <h2 className="text-xl font-semibold mb-2">Book Appointment</h2>
+          <p className="text-gray-500 mb-4">Select doctor department, schedule time, and upload past reports.</p>
+          <Link to="/book" className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Book Now
+          </Link>
         </div>
-
-        {/* Right Section (Market Cap List / Sidebar) - 1 Column */}
-        <div className="lg:col-span-1">
-          <Sidebar
-            cryptos={filteredCryptos}
-            currency={currency}
-            onSelectCoin={setSelectedCoin}
-            selectedCoin={selectedCoin}
-          />
+        <div className="p-6 border rounded-lg shadow-sm bg-white">
+          <h2 className="text-xl font-semibold mb-2">My Appointments</h2>
+          <p className="text-gray-500 mb-4">Check past history and upcoming booked slots.</p>
+          <Link to="/appointments" className="inline-block px-4 py-2 bg-gray-100 text-blue-600 rounded border hover:bg-gray-200">
+            View History
+          </Link>
         </div>
       </div>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
+
+  return (
+    <Router>
+      <nav className="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm">
+        <Link to="/" className="font-bold text-xl text-blue-600">HealthCare+</Link>
+        <div className="space-x-4 flex items-center">
+          <Link to="/" className="text-gray-700 hover:text-blue-600">Home</Link>
+          <Link to="/appointments" className="text-gray-700 hover:text-blue-600">My Appointments</Link>
+          {user ? (
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-semibold text-gray-700">Hi, {user.name}</span>
+              <button onClick={handleLogout} className="text-sm text-red-600 hover:underline">Logout</button>
+            </div>
+          ) : (
+            <Link to="/login" className="text-blue-600 font-medium hover:underline">Login</Link>
+          )}
+        </div>
+      </nav>
+
+      <main className="min-h-screen bg-gray-50">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/book" element={<BookAppointment />} />
+          <Route path="/appointments" element={<MyAppointments />} />
+        </Routes>
+      </main>
+    </Router>
+  );
+}
